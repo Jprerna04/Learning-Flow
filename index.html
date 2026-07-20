@@ -188,17 +188,6 @@
   }
   footer .tag{color:var(--navy);font-weight:500;}
 
-  .admin-panel{max-width:900px;margin:0 auto 60px;}
-  .admin-panel h2{font-size:18px;color:var(--navy);margin:0 0 4px;}
-  .admin-panel .count{font-size:13px;color:#5c5c6e;margin:0 0 18px;}
-  .admin-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-  .admin-table th{
-    text-align:left;background:var(--ivory);color:var(--navy);
-    padding:10px 14px;font-weight:600;font-size:12px;letter-spacing:0.3px;
-  }
-  .admin-table td{padding:10px 14px;border-top:1px solid var(--line);color:var(--ink);}
-  .admin-empty{font-size:13px;color:#8a8a99;padding:20px 0;text-align:center;}
-
   @media (max-width:640px){
     .row2{grid-template-columns:1fr;}
     .form-card{padding:34px 24px;}
@@ -299,14 +288,6 @@
   </div>
 </section>
 
-<section class="wrap" id="adminSection" style="display:none;">
-  <div class="admin-panel">
-    <h2>Waitlist signups</h2>
-    <p class="count" id="adminCount"></p>
-    <div id="adminTableWrap"></div>
-  </div>
-</section>
-
 <footer class="wrap">
   <span class="tag">Learning Flow</span> — career growth, redesigned for the age of AI.
 </footer>
@@ -380,7 +361,6 @@
     btn.textContent = 'Joining...';
 
     const entry = { name, email, phone, role, ts: new Date().toISOString() };
-    const key = 'signup:' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
 
     try{
       if(SHEET_ENDPOINT && SHEET_ENDPOINT.indexOf('PASTE_YOUR') === -1){
@@ -391,9 +371,6 @@
           body: JSON.stringify(entry)
         });
       }
-      if(window.storage && window.storage.set){
-        await window.storage.set(key, JSON.stringify(entry), true);
-      }
       document.getElementById('formView').style.display = 'none';
       document.getElementById('successState').style.display = 'block';
     }catch(err){
@@ -403,37 +380,6 @@
       btn.textContent = 'Join the waitlist';
     }
   });
-  const params = new URLSearchParams(window.location.search);
-  if(params.get('admin') === 'lf2026'){
-    (async ()=>{
-      const section = document.getElementById('adminSection');
-      const countEl = document.getElementById('adminCount');
-      const wrap = document.getElementById('adminTableWrap');
-      section.style.display = 'block';
-      try{
-        const listResult = await window.storage.list('signup:', true);
-        const keys = (listResult && listResult.keys) || [];
-        if(keys.length === 0){
-          countEl.textContent = 'No signups yet.';
-          wrap.innerHTML = '<div class="admin-empty">Entries will appear here as people join the waitlist.</div>';
-          return;
-        }
-        const entries = [];
-        for(const k of keys){
-          try{
-            const r = await window.storage.get(k, true);
-            if(r && r.value) entries.push(JSON.parse(r.value));
-          }catch(e){}
-        }
-        entries.sort((a,b)=> new Date(b.ts) - new Date(a.ts));
-        countEl.textContent = entries.length + ' total';
-        let rows = entries.map(en => `<tr><td>${en.name}</td><td>${en.email}</td><td>${en.phone}</td><td>${en.role}</td><td>${new Date(en.ts).toLocaleString()}</td></tr>`).join('');
-        wrap.innerHTML = `<table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th></tr></thead><tbody>${rows}</tbody></table>`;
-      }catch(err){
-        countEl.textContent = "Couldn't load signups.";
-      }
-    })();
-  }
 </script>
 
 </body>
